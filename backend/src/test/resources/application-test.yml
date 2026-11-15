@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5432/summit_test}
+    username: ${TEST_DATABASE_USERNAME:summit}
+    password: ${TEST_DATABASE_PASSWORD:summit}
+
+app:
+  admin-emails: admin@test.ie
+  auth:
+    cookie-secure: false

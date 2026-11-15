@@ -1,0 +1,47 @@
+# Runs the whole app locally: database + API + website.
+#   cp .env.example .env   (then edit it)
+#   docker compose up --build
+#   open http://localhost:8080
+# This is for local use and demos. Production hosting is set up by the hosting company (see docs/HANDOVER.md).
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: summit
+      POSTGRES_USER: summit
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-summit}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U summit -d summit"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/summit
+      DATABASE_USERNAME: summit
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-summit}
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
+      APP_ADMIN_EMAILS: ${APP_ADMIN_EMAILS:-}
+      # Local runs use plain http, so the login cookie can't be "Secure". Never set this in production.
+      COOKIE_SECURE: "false"
+      APP_SEED_DEMO_DATA: ${APP_SEED_DEMO_DATA:-false}
+      APP_SEED_DEMO_DATE: ${APP_SEED_DEMO_DATE:-2027-02-18}
+
+  web:
+    build: ./frontend
+    depends_on:
+      - api
+    environment:
+      BACKEND_URL: http://api:8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  db-data:

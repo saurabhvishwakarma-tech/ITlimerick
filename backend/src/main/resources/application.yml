@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: summit-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/summit}
+    username: ${DATABASE_USERNAME:summit}
+    password: ${DATABASE_PASSWORD:summit}
+    hikari:
+      maximum-pool-size: ${DATABASE_POOL_SIZE:10}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  threads:
+    virtual:
+      enabled: true
+  jackson:
+    deserialization:
+      # Treat a missing true/false field as false instead of rejecting the request.
+      fail-on-null-for-primitives: false
+
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  # Public URL of the frontend, used in password reset emails.
+  public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:5173}
+  # Comma-separated emails that become platform admins when they register or log in.
+  admin-emails: ${APP_ADMIN_EMAILS:}
+  privacy-notice-version: ${APP_PRIVACY_NOTICE_VERSION:2026-11}
+  auth:
+    cookie-name: SUMMIT_SESSION
+    # Must be true in production (HTTPS). Set COOKIE_SECURE=false only for local HTTP.
+    cookie-secure: ${COOKIE_SECURE:true}
+    session-days: ${SESSION_DAYS:30}
+    max-failed-logins: 10
+    lockout-minutes: 15
+  email:
+    # Optional. If set, emails are POSTed as JSON {to, subject, text} to this URL.
+    webhook-url: ${EMAIL_WEBHOOK_URL:}
+    webhook-token: ${EMAIL_WEBHOOK_TOKEN:}
+  retention:
+    # Delete non-admin accounts that have not logged in for this many days. 0 = off.
+    delete-inactive-users-after-days: ${RETENTION_DELETE_INACTIVE_USERS_DAYS:0}
+
+logging:
+  level:
+    root: INFO

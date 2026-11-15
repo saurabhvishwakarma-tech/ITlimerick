@@ -1,0 +1,50 @@
+# Rendered at container start: ${BACKEND_URL} is replaced from the environment.
+
+# Keep the original scheme when a load balancer terminates HTTPS in front of nginx.
+map $http_x_forwarded_proto $forwarded_proto {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+}
+
+server {
+    listen 8080;
+    server_name _;
+    server_tokens off;
+    root /usr/share/nginx/html;
+
+    client_max_body_size 1m;
+
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    # API: same origin as the site, so login cookies stay first-party and no CORS is needed.
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $forwarded_proto;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_read_timeout 30s;
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    location = /actuator/health {
+        proxy_pass ${BACKEND_URL};
+    }
+
+    # Built files have content hashes in their names, so they can be cached for a year.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    # Everything else is the single-page app.
+    location / {
+        try_files $uri /index.html;
+        add_header Cache-Control "no-cache";
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+}
