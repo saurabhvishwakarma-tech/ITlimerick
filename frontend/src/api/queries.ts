@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from './http';
 import type {
   AnnouncementView,
+  ChatMessageView,
   EventView,
+  TeamView,
+  VotingView,
   SessionView,
   SpeakerDetail,
   SpeakerView,
@@ -45,4 +48,30 @@ export const useAnnouncements = (slug: string) =>
     queryFn: () => api<AnnouncementView[]>(`/api/v1/events/${slug}/announcements`),
     refetchInterval: ANNOUNCEMENT_POLL_MS,
     refetchIntervalInBackground: false,
+  });
+
+// ---- Hackathon (only used when the event has the hackathon switched on) ----
+
+export const useTeams = (slug: string, loggedIn: boolean) =>
+  useQuery({
+    queryKey: ['teams', slug, loggedIn],
+    queryFn: () => api<TeamView[]>(`/api/v1/events/${slug}/teams`),
+  });
+
+export const useTeam = (id: string, loggedIn: boolean) =>
+  useQuery({ queryKey: ['team', id, loggedIn], queryFn: () => api<TeamView>(`/api/v1/teams/${id}`) });
+
+export const useVoting = (slug: string, userId: string | undefined) =>
+  useQuery({
+    queryKey: ['voting', slug, userId],
+    queryFn: () => api<VotingView>(`/api/v1/events/${slug}/voting`),
+    refetchInterval: 30_000,
+  });
+
+export const useChat = (slug: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ['chat', slug],
+    queryFn: () => api<ChatMessageView[]>(`/api/v1/events/${slug}/chat`),
+    enabled,
+    refetchInterval: 8_000,
   });

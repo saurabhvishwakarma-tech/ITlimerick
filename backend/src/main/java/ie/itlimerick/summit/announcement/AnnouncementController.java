@@ -1,7 +1,10 @@
 package ie.itlimerick.summit.announcement;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
@@ -22,6 +25,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import ie.itlimerick.summit.chat.AnnouncementReaction;
+import ie.itlimerick.summit.chat.AnnouncementReactionRepository;
 import ie.itlimerick.summit.common.ApiException;
 import ie.itlimerick.summit.event.EventService;
 import ie.itlimerick.summit.security.CurrentUser;
@@ -36,10 +41,12 @@ import static ie.itlimerick.summit.event.EventService.blankToNull;
 public class AnnouncementController {
 
     public record AnnouncementView(UUID id, String title, String body, Announcement.Priority priority, boolean pinned,
-                                   Instant publishedAt, Instant updatedAt) {
+                                   Instant publishedAt, Instant updatedAt,
+                                   Map<AnnouncementReaction.Emoji, Long> reactions,
+                                   List<AnnouncementReaction.Emoji> myReactions) {
         static AnnouncementView of(Announcement a) {
             return new AnnouncementView(a.getId(), a.getTitle(), a.getBody(), a.getPriority(), a.isPinned(),
-                    a.getPublishedAt(), a.getUpdatedAt());
+                    a.getPublishedAt(), a.getUpdatedAt(), Map.of(), List.of());
         }
     }
 
@@ -54,20 +61,36 @@ public class AnnouncementController {
     private static final int PUBLIC_LIMIT = 50;
 
     private final AnnouncementRepository announcements;
+    private final AnnouncementReactionRepository reactions;
     private final EventService events;
 
-    public AnnouncementController(AnnouncementRepository announcements, EventService events) {
+    public AnnouncementController(AnnouncementRepository announcements, AnnouncementReactionRepository reactions,
+                                  EventService events) {
         this.announcements = announcements;
+        this.reactions = reactions;
         this.events = events;
     }
 
     @GetMapping("/api/v1/events/{slug}/announcements")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AnnouncementView>> live(@PathVariable String slug) {
+    public ResponseEntity<List<AnnouncementView>> live(@PathVariable String slug, @AuthenticationPrincipal CurrentUser user) {
         UUID eventId = events.requirePublished(slug).getId();
-        List<AnnouncementView> body = announcements.findLive(eventId, Instant.now(), Limit.of(PUBLIC_LIMIT)).stream()
-                .map(AnnouncementView::of).toList();
-        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(body);
+        List<Announcement> live = announcements.findLive(eventId, Instant.now(), Limit.of(PUBLIC_LIMIT));
+        List<AnnouncementReaction> all = reactions.findByAnnouncementIdIn(live.stream().map(Announcement::getId).toList());
+        List<AnnouncementView> body = live.stream().map(a -> {
+            Map<AnnouncementReaction.Emoji, Long> counts = new EnumMap<>(AnnouncementReaction.Emoji.class);
+            List<AnnouncementReaction.Emoji> mine = new ArrayList<>();
+            all.stream().filter(r -> r.getAnnouncementId().equals(a.getId())).forEach(r -> {
+                counts.merge(r.getEmoji(), 1L, Long::sum);
+                if (user != null && r.getUserId().equals(user.id())) {
+                    mine.add(r.getEmoji());
+                }
+            });
+            return new AnnouncementView(a.getId(), a.getTitle(), a.getBody(), a.getPriority(), a.isPinned(),
+                    a.getPublishedAt(), a.getUpdatedAt(), counts, mine);
+        }).toList();
+        // "private" because the response includes the viewer's own reactions.
+        return ResponseEntity.ok().cacheControl(CacheControl.noCache().cachePrivate()).body(body);
     }
 
     @GetMapping("/api/v1/admin/events/{eventId}/announcements")

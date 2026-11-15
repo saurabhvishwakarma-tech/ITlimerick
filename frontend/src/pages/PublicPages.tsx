@@ -1,10 +1,12 @@
-import { useEffect, useMemo } from 'react';
-import { Link, useParams } from 'react-router';
-import { useAgenda, useAnnouncements, useEvent, useSession, useSpeaker, useSpeakers, useSponsors } from '../api/queries';
-import type { SponsorView } from '../api/types';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../api/http';
+import { useAgenda, useAnnouncements, useChat, useEvent, useSession, useSpeaker, useSpeakers, useSponsors } from '../api/queries';
+import type { AnnouncementView, ChatMessageView, Emoji, SponsorView } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { markUpdatesSeen } from '../components/Shell';
-import { Avatar, BookmarkButton, Empty, ErrorState, Loading, safeUrl } from '../components/ui';
+import { Avatar, BookmarkButton, Empty, ErrorState, Loading, Notice, safeUrl } from '../components/ui';
 import { formatDateTime, formatDay, formatTime, relativeTime } from '../lib/time';
 import { useNow } from '../lib/useNow';
 import { useSchedule } from '../lib/useSchedule';
@@ -214,13 +216,68 @@ export function PartnersPage() {
   );
 }
 
-// ---------------- Updates ----------------
+// ---------------- Updates (announcements + optional chat) ----------------
+
+const EMOJI: { key: Emoji; char: string; label: string }[] = [
+  { key: 'HEART', char: '\u2764\uFE0F', label: 'Love' },
+  { key: 'THUMBS_UP', char: '\uD83D\uDC4D', label: 'Thumbs up' },
+  { key: 'PARTY', char: '\uD83C\uDF89', label: 'Celebrate' },
+  { key: 'CLAP', char: '\uD83D\uDC4F', label: 'Applause' },
+];
+
+function Reactions({ slug, a }: { slug: string; a: AnnouncementView }) {
+  const { user } = useAuth();
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const toggle = useMutation({
+    mutationFn: ({ emoji, on }: { emoji: Emoji; on: boolean }) =>
+      api<void>(`/api/v1/me/announcements/${a.id}/reactions/${emoji}`, { method: on ? 'PUT' : 'DELETE' }),
+    onMutate: ({ emoji, on }) => {
+      client.setQueryData<AnnouncementView[]>(['announcements', slug], (list) =>
+        list?.map((x) =>
+          x.id !== a.id
+            ? x
+            : {
+                ...x,
+                myReactions: on ? [...x.myReactions, emoji] : x.myReactions.filter((e) => e !== emoji),
+                reactions: { ...x.reactions, [emoji]: Math.max(0, (x.reactions[emoji] ?? 0) + (on ? 1 : -1)) },
+              },
+        ),
+      );
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: ['announcements', slug] }),
+  });
+  return (
+    <div className="reactions">
+      {EMOJI.map((e) => {
+        const count = a.reactions[e.key] ?? 0;
+        const mine = a.myReactions.includes(e.key);
+        if (!user && count === 0) return null;
+        return (
+          <button
+            key={e.key}
+            className="reaction"
+            aria-pressed={mine}
+            aria-label={`${e.label}${count ? `, ${count}` : ''}`}
+            onClick={() => (user ? toggle.mutate({ emoji: e.key, on: !mine }) : navigate(`/login?next=/e/${slug}/updates`))}
+          >
+            <span aria-hidden="true">{e.char}</span>
+            {count > 0 && <span>{count}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export function UpdatesPage() {
   const { slug = '' } = useParams();
+  const event = useEvent(slug);
   const updates = useAnnouncements(slug);
   const tz = useTz(slug);
   const now = useNow(30_000);
+  const [tab, setTab] = useState<'news' | 'chat'>('news');
+  const chatOn = event.data?.chatEnabled ?? false;
 
   useEffect(() => {
     const latest = updates.data?.reduce<string | null>((m, a) => (!m || a.publishedAt > m ? a.publishedAt : m), null);
@@ -233,9 +290,23 @@ export function UpdatesPage() {
     <div className="narrow">
       <div className="page-title">
         <h1>Updates</h1>
-        <p className="lede">Live news from the organisers. This page refreshes on its own.</p>
+        <p className="lede">
+          {tab === 'news' ? 'Official news from the organisers. This page refreshes on its own.' : 'Chat with everyone at the event.'}
+        </p>
       </div>
-      {updates.data.length === 0 ? (
+      {chatOn && (
+        <div className="admin-tabs" role="tablist" aria-label="Updates">
+          <button role="tab" className="tab-btn" aria-selected={tab === 'news'} onClick={() => setTab('news')}>
+            Announcements
+          </button>
+          <button role="tab" className="tab-btn" aria-selected={tab === 'chat'} onClick={() => setTab('chat')}>
+            Chat
+          </button>
+        </div>
+      )}
+      {tab === 'chat' && chatOn ? (
+        <ChatPanel slug={slug} eventId={event.data!.id} tz={tz} />
+      ) : updates.data.length === 0 ? (
         <Empty title="No updates yet">
           <p>Room changes, reminders and news will show up here during the event.</p>
         </Empty>
@@ -249,10 +320,115 @@ export function UpdatesPage() {
                 {a.pinned ? 'Pinned, ' : ''}
                 {relativeTime(a.publishedAt, now)}
               </time>
+              <Reactions slug={slug} a={a} />
             </li>
           ))}
         </ol>
       )}
+    </div>
+  );
+}
+
+function ChatPanel({ slug, eventId, tz }: { slug: string; eventId: string; tz: string }) {
+  const { user, canManage } = useAuth();
+  const chat = useChat(slug, !!user);
+  const client = useQueryClient();
+  const [text, setText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const count = chat.data?.length ?? 0;
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: 'end' });
+  }, [count]);
+
+  const send = useMutation({
+    mutationFn: (body: string) => api<ChatMessageView>(`/api/v1/me/chat?event=${encodeURIComponent(slug)}`, { method: 'POST', body: { body } }),
+    onSuccess: () => {
+      setText('');
+      setError(null);
+      client.invalidateQueries({ queryKey: ['chat', slug] });
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : 'Message not sent.'),
+  });
+
+  const remove = useMutation({
+    mutationFn: (m: ChatMessageView) =>
+      api<void>(m.mine ? `/api/v1/me/chat/${m.id}` : `/api/v1/admin/events/${eventId}/chat/${m.id}`, { method: 'DELETE' }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['chat', slug] }),
+  });
+
+  if (!user) {
+    return (
+      <Empty title="Log in to chat">
+        <p>The chat is for people at the event.</p>
+        <Link className="btn" to={`/login?next=/e/${slug}/updates`}>
+          Log in
+        </Link>
+      </Empty>
+    );
+  }
+  if (chat.isPending) return <Loading />;
+  if (chat.isError) return <ErrorState error={chat.error} onRetry={() => chat.refetch()} />;
+  const moderator = canManage(eventId);
+
+  return (
+    <div className="chat">
+      {chat.data.length === 0 ? (
+        <p className="muted">No messages yet. Say hello.</p>
+      ) : (
+        <ol className="chat-list">
+          {chat.data.map((m) => (
+            <li key={m.id} className={`chat-msg ${m.mine ? 'is-mine' : ''} ${m.fromOrganiser ? 'is-organiser' : ''}`}>
+              <div className="chat-meta">
+                <strong>{m.authorName}</strong>
+                {m.fromOrganiser && <span className="org-tag">Organiser</span>}
+                <time dateTime={m.createdAt}>{formatTime(m.createdAt, tz)}</time>
+              </div>
+              {m.removed ? <p className="muted">Message removed.</p> : <p className="post-body">{m.body}</p>}
+              {!m.removed && (m.mine || moderator) && (
+                <button
+                  className="btn link small-link"
+                  onClick={() => window.confirm('Remove this message?') && remove.mutate(m)}
+                >
+                  Remove
+                </button>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      <div ref={endRef} />
+      <form
+        className="chat-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (text.trim()) send.mutate(text.trim());
+        }}
+      >
+        {error && <Notice kind="error">{error}</Notice>}
+        <label className="visually-hidden" htmlFor="chat-input">
+          Message
+        </label>
+        <textarea
+          id="chat-input"
+          rows={2}
+          maxLength={1000}
+          placeholder="Write a message"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              if (text.trim()) send.mutate(text.trim());
+            }
+          }}
+        />
+        <button className="btn" disabled={send.isPending || !text.trim()}>
+          Send
+        </button>
+      </form>
+      <p className="muted">Be kind. Organisers can remove messages.</p>
     </div>
   );
 }

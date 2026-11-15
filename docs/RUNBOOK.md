@@ -39,6 +39,15 @@ They don't need to: the agenda and bookmarks work without an account. If passwor
 3. Phones that opened the app earlier still show the last saved agenda.
 4. Point people to the printed agenda and announce changes from the stage.
 
+**Teams for the hackathon.**
+Admin panel → event → Hackathon. People waiting for a team are counted at the top. Click "Sort people into teams" to place them all. Use the drop-downs to move anyone by hand.
+
+**Running the vote.**
+Set "Voting opens" and "Voting closes" in Event details. Shortlist teams on the Hackathon tab if only some should be on the ballot. Watch live counts on the Hackathon tab. To show results to everyone after voting closes, tick "Show vote results to everyone" in Event details.
+
+**Someone posts something inappropriate in the chat.**
+Log in as an organiser, open Updates → Chat, and press Remove on the message. To stop the chat entirely, untick "Turn on attendee chat" in Event details.
+
 **A bad update was posted.**
 Admin panel → Updates → Delete. It disappears from phones within about 30 seconds.
 

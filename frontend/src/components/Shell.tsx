@@ -59,14 +59,51 @@ const icons = {
   ),
 };
 
+const extraIcons = {
+  teams: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.5" />
+      <circle cx="17" cy="9" r="2.5" />
+      <path d="M2.5 20c.8-3.5 3.3-5.5 6.5-5.5s5.7 2 6.5 5.5" />
+      <path d="M15.5 14.6c2.6.1 4.7 1.9 5.5 4.9" />
+    </svg>
+  ),
+  vote: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 12l5 5L20 6" />
+    </svg>
+  ),
+  more: (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+    </svg>
+  ),
+};
+
 function EventNav({ slug, variant, hasNewUpdates }: { slug: string; variant: 'top' | 'tabs'; hasNewUpdates: boolean }) {
-  const items = [
-    { to: `/e/${slug}`, label: 'Agenda', icon: icons.agenda, end: true },
-    { to: `/e/${slug}/speakers`, label: 'Speakers', icon: icons.speakers },
-    { to: `/e/${slug}/partners`, label: 'Partners', icon: icons.partners },
-    { to: `/e/${slug}/updates`, label: 'Updates', icon: icons.updates, dot: hasNewUpdates },
-    { to: `/e/${slug}/my-schedule`, label: 'My schedule', icon: <BookmarkIcon filled={false} /> },
-  ];
+  const hackathon = useEvent(slug).data?.hackathonEnabled ?? false;
+  const all = {
+    agenda: { to: `/e/${slug}`, label: 'Agenda', icon: icons.agenda, end: true },
+    speakers: { to: `/e/${slug}/speakers`, label: 'Speakers', icon: icons.speakers },
+    partners: { to: `/e/${slug}/partners`, label: 'Partners', icon: icons.partners },
+    teams: { to: `/e/${slug}/teams`, label: 'Teams', icon: extraIcons.teams },
+    vote: { to: `/e/${slug}/vote`, label: 'Vote', icon: extraIcons.vote },
+    updates: { to: `/e/${slug}/updates`, label: 'Updates', icon: icons.updates, dot: hasNewUpdates },
+    schedule: { to: `/e/${slug}/my-schedule`, label: 'My schedule', icon: <BookmarkIcon filled={false} /> },
+    more: { to: `/e/${slug}/more`, label: 'More', icon: extraIcons.more },
+  };
+  type Item = { to: string; label: string; icon: ReactNode; end?: boolean; dot?: boolean };
+  // Phones have room for five tabs; with the hackathon on, the less-used pages move under "More".
+  const items: Item[] =
+    variant === 'top'
+      ? hackathon
+        ? [all.agenda, all.speakers, all.partners, all.teams, all.vote, all.updates, all.schedule]
+        : [all.agenda, all.speakers, all.partners, all.updates, all.schedule]
+      : hackathon
+        ? [all.agenda, all.teams, all.vote, all.updates, all.more]
+        : [all.agenda, all.speakers, all.partners, all.updates, all.schedule];
   return (
     <nav className={variant === 'top' ? 'topnav' : 'tabbar'} aria-label={variant === 'top' ? 'Event' : 'Event sections'}>
       {items.map((item) => (

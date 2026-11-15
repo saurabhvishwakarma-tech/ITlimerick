@@ -23,6 +23,8 @@ import ie.itlimerick.summit.announcement.Announcement;
 import ie.itlimerick.summit.announcement.AnnouncementRepository;
 import ie.itlimerick.summit.event.Event;
 import ie.itlimerick.summit.event.EventRepository;
+import ie.itlimerick.summit.hackathon.Team;
+import ie.itlimerick.summit.hackathon.TeamRepository;
 import ie.itlimerick.summit.speaker.Speaker;
 import ie.itlimerick.summit.speaker.SpeakerRepository;
 import ie.itlimerick.summit.sponsor.Sponsor;
@@ -45,11 +47,13 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final AgendaSessionRepository sessions;
     private final SponsorRepository sponsors;
     private final AnnouncementRepository announcements;
+    private final TeamRepository teams;
     private final String date;
 
     public DemoDataSeeder(EventRepository events, SpeakerRepository speakers, AgendaSessionRepository sessions,
-                          SponsorRepository sponsors, AnnouncementRepository announcements,
+                          SponsorRepository sponsors, AnnouncementRepository announcements, TeamRepository teams,
                           @Value("${app.seed-demo-date:2027-02-18}") String date) {
+        this.teams = teams;
         this.events = events;
         this.speakers = speakers;
         this.sessions = sessions;
@@ -75,6 +79,12 @@ public class DemoDataSeeder implements ApplicationRunner {
         e.setStartsAt(at(day, "08:30"));
         e.setEndsAt(at(day, "17:00"));
         e.setStatus(Event.Status.PUBLISHED);
+        e.setHackathonEnabled(true);
+        e.setTeamMaxSize(4);
+        e.setVotingOpensAt(at(day, "09:00"));
+        e.setVotingClosesAt(at(day, "16:30"));
+        e.setVotingResultsPublic(true);
+        e.setChatEnabled(true);
         e = events.save(e);
         UUID id = e.getId();
 
@@ -100,12 +110,28 @@ public class DemoDataSeeder implements ApplicationRunner {
         sponsor(id, "Placeholder Cloud", "Partner", 2, null);
         sponsor(id, "Limerick Community Example", "Community partner", 3, null);
 
+        team(id, "Shannon Coders", "FloodWatch", "Early warnings for river flooding using open sensor data.", "Climate", "SHNN01");
+        team(id, "Treaty Labs", "ClinicQueue", "Shorter waits at GP clinics by predicting busy times.", "Health", "TRTY02");
+        team(id, "Mid-West Makers", "SkillSwap", "Matches students with local mentors for short projects.", "Education", "MWMK03");
+        team(id, "King John's Devs", "BinDay", "Reminds households which bin goes out, with recycling tips.", "Community", "KJDV04");
+
         Announcement welcome = new Announcement();
         welcome.setEventId(id);
         welcome.setTitle("Welcome to the sample summit");
         welcome.setBody("This is a sample update. Organisers can post room changes and reminders from the admin panel.");
         welcome.setPublishedAt(Instant.now().minusSeconds(3600));
         announcements.save(welcome);
+    }
+
+    private void team(UUID eventId, String name, String project, String description, String sector, String code) {
+        Team t = new Team();
+        t.setEventId(eventId);
+        t.setName(name);
+        t.setProjectName(project);
+        t.setDescription(description + " (Fictional sample team.)");
+        t.setSector(sector);
+        t.setJoinCode(code);
+        teams.save(t);
     }
 
     private static Instant at(LocalDate day, String time) {

@@ -59,6 +59,9 @@ Traffic flow: browser → your load balancer (HTTPS) → website container → A
 
 ## 4. Expected load
 
+Chat and voting use polling (every 8 and 30 seconds), not WebSockets, so no sticky sessions or socket support are needed at the load balancer.
+
+
 A few hundred attendees on one day. The heaviest moment is the morning, when most phones open the agenda at once, plus each open app checking for updates every 30 seconds. Public responses carry ETags, so unchanged data returns a small 304.
 
 Suggested starting point: 2 API instances (for resilience, not load) with 1 GB RAM each, and the smallest production-grade PostgreSQL. Please run a quick load test (for example k6) in the week before the event at 2–3× the expected attendee count.
@@ -101,6 +104,9 @@ All endpoints are under `/api/v1`.
 | Auth | `GET /auth/csrf`, `GET /auth/session`, `POST /auth/register`, `/auth/login`, `/auth/logout`, `/auth/password/forgot`, `/auth/password/reset` | Anyone |
 | Public | `GET /events`, `/events/{slug}`, `/events/{slug}/sessions`, `/rooms`, `/speakers`, `/sponsors`, `/announcements`, `GET /sessions/{id}`, `GET /speakers/{id}` | Anyone (published events only) |
 | Me | `GET/PATCH/DELETE /me`, `PUT /me/password`, `PUT /me/consents`, `GET /me/export`, `GET /me/schedule?event=`, `PUT/DELETE /me/schedule/{sessionId}` | Logged in |
-| Admin | `/admin/events[/{id}]` plus `/sessions`, `/rooms`, `/speakers`, `/sponsors`, `/announcements`, `/members` under each event | Organisers of that event; creating/deleting events needs a platform admin |
+| Hackathon (public) | `GET /events/{slug}/teams`, `GET /teams/{id}`, `GET /events/{slug}/voting` | Anyone (member names only when logged in) |
+| Hackathon (me) | `GET/PUT/DELETE /me/hackathon?event=`, `POST/PUT /me/team?event=`, `POST /me/team/join`, `POST /me/team/leave?event=`, `PUT/DELETE /me/vote?event=` | Logged in |
+| Chat | `GET /events/{slug}/chat[?after=]`, `POST /me/chat?event=`, `DELETE /me/chat/{id}`, `PUT/DELETE /me/announcements/{id}/reactions/{HEART|THUMBS_UP|PARTY|CLAP}` | Logged in; event must have chat switched on |
+| Admin | `/admin/events[/{id}]` plus `/sessions`, `/rooms`, `/speakers`, `/sponsors`, `/announcements`, `/members`, `/teams` (+ `/auto-sort`, `/{id}/members`), `/participants`, `/votes`, `/chat/{id}` under each event | Organisers of that event; creating/deleting events needs a platform admin |
 
 Every request that changes something must send the `X-XSRF-TOKEN` header matching the `XSRF-TOKEN` cookie. The frontend does this automatically.

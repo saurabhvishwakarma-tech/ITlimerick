@@ -14,6 +14,12 @@ export interface EventView {
   endsAt: string | null;
   timezone: string;
   status: EventStatus;
+  hackathonEnabled: boolean;
+  teamMaxSize: number;
+  votingOpensAt: string | null;
+  votingClosesAt: string | null;
+  votingResultsPublic: boolean;
+  chatEnabled: boolean;
 }
 
 export interface RoomView {
@@ -76,6 +82,8 @@ export interface SponsorView {
 
 export type Priority = 'NORMAL' | 'URGENT';
 
+export type Emoji = 'HEART' | 'THUMBS_UP' | 'PARTY' | 'CLAP';
+
 export interface AnnouncementView {
   id: string;
   title: string;
@@ -84,6 +92,89 @@ export interface AnnouncementView {
   pinned: boolean;
   publishedAt: string;
   updatedAt: string;
+  reactions: Partial<Record<Emoji, number>>;
+  myReactions: Emoji[];
+}
+
+// ---- Hackathon ----
+
+export interface TeamView {
+  id: string;
+  name: string;
+  projectName: string | null;
+  description: string | null;
+  sector: string | null;
+  logoUrl: string | null;
+  projectUrl: string | null;
+  shortlisted: boolean;
+  memberCount: number;
+  memberNames: string[];
+}
+
+export type TeamRole = 'LEAD' | 'MEMBER';
+
+export interface TeamAdminView {
+  id: string;
+  name: string;
+  projectName: string | null;
+  description: string | null;
+  sector: string | null;
+  logoUrl: string | null;
+  projectUrl: string | null;
+  shortlisted: boolean;
+  joinCode: string;
+  members: { userId: string; displayName: string; email: string; role: TeamRole }[];
+}
+
+export interface ParticipantView {
+  userId: string;
+  displayName: string;
+  email: string;
+  skills: string | null;
+  lookingForTeam: boolean;
+  teamId: string | null;
+  teamName: string | null;
+  joinedAt: string;
+}
+
+export interface MyHackathonView {
+  participant: boolean;
+  skills: string | null;
+  lookingForTeam: boolean;
+  team: TeamView | null;
+  myRole: TeamRole | null;
+  joinCode: string | null;
+  teamMaxSize: number;
+}
+
+export type VotingStatus = 'NOT_SCHEDULED' | 'NOT_OPEN' | 'OPEN' | 'CLOSED';
+
+export interface VotingView {
+  status: VotingStatus;
+  opensAt: string | null;
+  closesAt: string | null;
+  candidates: {
+    teamId: string;
+    name: string;
+    projectName: string | null;
+    description: string | null;
+    logoUrl: string | null;
+    sector: string | null;
+    isMyTeam: boolean;
+  }[];
+  myVoteTeamId: string | null;
+  results: { teamId: string; name: string; projectName: string | null; votes: number }[] | null;
+  totalVotes: number;
+}
+
+export interface ChatMessageView {
+  id: string;
+  authorName: string;
+  fromOrganiser: boolean;
+  mine: boolean;
+  body: string | null;
+  removed: boolean;
+  createdAt: string;
 }
 
 export interface UserView {

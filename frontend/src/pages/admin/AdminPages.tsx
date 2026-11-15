@@ -16,6 +16,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { Empty, ErrorState, Loading, Notice } from '../../components/ui';
 import { formatDateTime } from '../../lib/time';
 import { CrudTab, EditDialog, EntityForm, type FieldDef, type FormValues } from './CrudTab';
+import { HackathonTab } from './HackathonAdmin';
 
 const DEFAULT_TZ = 'Europe/Dublin';
 
@@ -39,6 +40,12 @@ const eventFields: FieldDef[] = [
       { value: 'PUBLISHED', label: 'Published: visible to everyone' },
     ],
   },
+  { name: 'hackathonEnabled', label: 'This event has a hackathon', type: 'checkbox', hint: 'Shows Teams and Vote to attendees.' },
+  { name: 'teamMaxSize', label: 'Maximum team size', type: 'number', hint: 'People can only join a team with a code while it has space.' },
+  { name: 'votingOpensAt', label: 'Voting opens', type: 'datetime', hint: 'Venue time. Leave empty until you know.' },
+  { name: 'votingClosesAt', label: 'Voting closes', type: 'datetime', hint: 'Venue time.' },
+  { name: 'votingResultsPublic', label: 'Show vote results to everyone after voting closes', type: 'checkbox' },
+  { name: 'chatEnabled', label: 'Turn on attendee chat', type: 'checkbox', hint: 'Logged-in attendees can post on the Updates page. Organisers can remove messages.' },
 ];
 
 function eventForm(e?: EventView): FormValues {
@@ -53,6 +60,12 @@ function eventForm(e?: EventView): FormValues {
     endsAt: e?.endsAt ?? null,
     timezone: e?.timezone ?? DEFAULT_TZ,
     status: e?.status ?? 'DRAFT',
+    hackathonEnabled: e?.hackathonEnabled ?? false,
+    teamMaxSize: e?.teamMaxSize ?? 5,
+    votingOpensAt: e?.votingOpensAt ?? null,
+    votingClosesAt: e?.votingClosesAt ?? null,
+    votingResultsPublic: e?.votingResultsPublic ?? false,
+    chatEnabled: e?.chatEnabled ?? false,
   };
 }
 
@@ -145,6 +158,7 @@ const TABS = [
   ['speakers', 'Speakers'],
   ['partners', 'Partners'],
   ['updates', 'Updates'],
+  ['hackathon', 'Hackathon'],
   ['rooms', 'Rooms'],
   ['team', 'Team'],
   ['details', 'Event details'],
@@ -197,6 +211,7 @@ function AdminEventInner() {
       {tab === 'speakers' && <SpeakersTab base={base} event={e} />}
       {tab === 'partners' && <PartnersTab base={base} event={e} />}
       {tab === 'updates' && <UpdatesTab base={base} event={e} />}
+      {tab === 'hackathon' && <HackathonTab base={base} event={e} />}
       {tab === 'rooms' && <RoomsTab base={base} event={e} />}
       {tab === 'team' && <TeamTab base={base} />}
       {tab === 'details' && <DetailsTab event={e} />}

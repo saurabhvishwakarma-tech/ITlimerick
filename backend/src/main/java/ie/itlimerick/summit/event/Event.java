@@ -52,6 +52,24 @@ public class Event {
     @Column(nullable = false)
     private Status status = Status.DRAFT;
 
+    @Column(name = "hackathon_enabled", nullable = false)
+    private boolean hackathonEnabled;
+
+    @Column(name = "team_max_size", nullable = false)
+    private int teamMaxSize = 5;
+
+    @Column(name = "voting_opens_at")
+    private Instant votingOpensAt;
+
+    @Column(name = "voting_closes_at")
+    private Instant votingClosesAt;
+
+    @Column(name = "voting_results_public", nullable = false)
+    private boolean votingResultsPublic;
+
+    @Column(name = "chat_enabled", nullable = false)
+    private boolean chatEnabled;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -85,4 +103,25 @@ public class Event {
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
     public boolean isPublished() { return status == Status.PUBLISHED; }
+    public boolean isHackathonEnabled() { return hackathonEnabled; }
+    public void setHackathonEnabled(boolean hackathonEnabled) { this.hackathonEnabled = hackathonEnabled; }
+    public int getTeamMaxSize() { return teamMaxSize; }
+    public void setTeamMaxSize(int teamMaxSize) { this.teamMaxSize = teamMaxSize; }
+    public Instant getVotingOpensAt() { return votingOpensAt; }
+    public void setVotingOpensAt(Instant votingOpensAt) { this.votingOpensAt = votingOpensAt; }
+    public Instant getVotingClosesAt() { return votingClosesAt; }
+    public void setVotingClosesAt(Instant votingClosesAt) { this.votingClosesAt = votingClosesAt; }
+    public boolean isVotingResultsPublic() { return votingResultsPublic; }
+    public void setVotingResultsPublic(boolean votingResultsPublic) { this.votingResultsPublic = votingResultsPublic; }
+    public boolean isChatEnabled() { return chatEnabled; }
+    public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }
+
+    /** Voting is open between the two times the organisers set. Both must be set. */
+    public boolean isVotingOpen(Instant now) {
+        return votingOpensAt != null && votingClosesAt != null && !now.isBefore(votingOpensAt) && now.isBefore(votingClosesAt);
+    }
+
+    public boolean isVotingClosed(Instant now) {
+        return votingClosesAt != null && !now.isBefore(votingClosesAt);
+    }
 }

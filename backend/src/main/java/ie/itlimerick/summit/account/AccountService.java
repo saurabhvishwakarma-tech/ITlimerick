@@ -11,6 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import ie.itlimerick.summit.agenda.AgendaSession;
+import ie.itlimerick.summit.chat.AnnouncementReactionRepository;
+import ie.itlimerick.summit.chat.ChatMessageRepository;
+import ie.itlimerick.summit.hackathon.HackathonParticipantRepository;
+import ie.itlimerick.summit.hackathon.TeamMemberRepository;
+import ie.itlimerick.summit.hackathon.VoteRepository;
 import ie.itlimerick.summit.agenda.AgendaSessionRepository;
 import ie.itlimerick.summit.common.ApiException;
 import ie.itlimerick.summit.config.AppProperties;
@@ -35,7 +40,10 @@ public class AccountService {
 
     public record ExportView(Instant exportedAt, Map<String, Object> account, List<MembershipView> memberships,
                              List<Map<String, Object>> savedSessions, List<Map<String, Object>> consents,
-                             List<Map<String, Object>> linkedSpeakerProfiles, long activeLoginSessions) {
+                             List<Map<String, Object>> linkedSpeakerProfiles, long activeLoginSessions,
+                             List<Map<String, Object>> hackathon, List<Map<String, Object>> teams,
+                             List<Map<String, Object>> votes, List<Map<String, Object>> chatMessages,
+                             List<Map<String, Object>> reactions) {
     }
 
     public record MemberView(UUID id, UUID userId, String email, String displayName, EventMembership.Role role,
@@ -51,11 +59,23 @@ public class AccountService {
     private final EventRepository events;
     private final AuthSessionRepository authSessions;
     private final AppProperties props;
+    private final HackathonParticipantRepository participants;
+    private final TeamMemberRepository teamMembers;
+    private final VoteRepository votes;
+    private final ChatMessageRepository chat;
+    private final AnnouncementReactionRepository reactions;
 
     public AccountService(AppUserRepository users, EventMembershipRepository memberships,
                           ConsentRecordRepository consents, BookmarkRepository bookmarks,
                           AgendaSessionRepository sessions, SpeakerRepository speakers, EventRepository events,
-                          AuthSessionRepository authSessions, AppProperties props) {
+                          AuthSessionRepository authSessions, AppProperties props,
+                          HackathonParticipantRepository participants, TeamMemberRepository teamMembers,
+                          VoteRepository votes, ChatMessageRepository chat, AnnouncementReactionRepository reactions) {
+        this.participants = participants;
+        this.teamMembers = teamMembers;
+        this.votes = votes;
+        this.chat = chat;
+        this.reactions = reactions;
         this.users = users;
         this.memberships = memberships;
         this.consents = consents;
@@ -113,14 +133,33 @@ public class AccountService {
         account.put("displayName", user.getDisplayName());
         account.put("createdAt", user.getCreatedAt());
         account.put("lastLoginAt", user.getLastLoginAt());
+        List<Map<String, Object>> hackathon = participants.findByUserId(userId).stream()
+                .map(p -> Map.<String, Object>of("eventId", p.getEventId(), "skills", p.getSkills() == null ? "" : p.getSkills(),
+                        "lookingForTeam", p.isLookingForTeam(), "joinedAt", p.getCreatedAt()))
+                .toList();
+        List<Map<String, Object>> teamList = teamMembers.findByUserId(userId).stream()
+                .map(m -> Map.<String, Object>of("teamId", m.getTeamId(), "eventId", m.getEventId(), "role", m.getRole(),
+                        "joinedAt", m.getJoinedAt()))
+                .toList();
+        List<Map<String, Object>> voteList = votes.findByUserId(userId).stream()
+                .map(v -> Map.<String, Object>of("eventId", v.getEventId(), "teamId", v.getTeamId(), "votedAt", v.getVotedAt()))
+                .toList();
+        List<Map<String, Object>> chatList = chat.findByUserId(userId).stream()
+                .map(c -> Map.<String, Object>of("eventId", c.getEventId(), "message", c.getBody(), "sentAt", c.getCreatedAt(),
+                        "removed", c.getDeletedAt() != null))
+                .toList();
+        List<Map<String, Object>> reactionList = reactions.findByUserId(userId).stream()
+                .map(r -> Map.<String, Object>of("updateId", r.getAnnouncementId(), "reaction", r.getEmoji()))
+                .toList();
         return new ExportView(Instant.now(), account, membershipViews(memberships.findByUserId(userId)),
-                savedSessions, consentList, speakerProfiles, authSessions.countByUserId(userId));
+                savedSessions, consentList, speakerProfiles, authSessions.countByUserId(userId),
+                hackathon, teamList, voteList, chatList, reactionList);
     }
 
     /**
      * GDPR right to erasure. Deletes the account and everything linked to it (sessions, bookmarks,
-     * memberships, consents cascade in the database). Speaker profiles and announcements stay but
-     * are unlinked from the account.
+     * memberships, consents, team memberships, votes and reactions cascade in the database).
+     * Speaker profiles and announcements stay but are unlinked; chat messages stay as "Former member".
      */
     @Transactional
     public void deleteAccount(UUID userId) {

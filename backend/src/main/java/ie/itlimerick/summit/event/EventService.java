@@ -99,8 +99,17 @@ public class EventService {
         e.setVenueAddress(blankToNull(req.venueAddress()));
         e.setStartsAt(req.startsAt());
         e.setEndsAt(req.endsAt());
+        if (req.votingOpensAt() != null && req.votingClosesAt() != null && !req.votingClosesAt().isAfter(req.votingOpensAt())) {
+            throw ApiException.badRequest("Voting must close after it opens");
+        }
         e.setTimezone(zone);
         e.setStatus(req.status());
+        e.setHackathonEnabled(req.hackathonEnabled());
+        e.setTeamMaxSize(req.teamMaxSize() == null || req.teamMaxSize() < 1 ? 5 : req.teamMaxSize());
+        e.setVotingOpensAt(req.votingOpensAt());
+        e.setVotingClosesAt(req.votingClosesAt());
+        e.setVotingResultsPublic(req.votingResultsPublic());
+        e.setChatEnabled(req.chatEnabled());
     }
 
     public static String blankToNull(String s) {

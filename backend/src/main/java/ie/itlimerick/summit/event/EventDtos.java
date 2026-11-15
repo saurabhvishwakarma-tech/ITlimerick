@@ -3,6 +3,8 @@ package ie.itlimerick.summit.event;
 import java.time.Instant;
 import java.util.UUID;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -15,11 +17,15 @@ public final class EventDtos {
 
     public record EventView(UUID id, String slug, String name, String tagline, String description,
                             String venueName, String venueAddress, Instant startsAt, Instant endsAt,
-                            String timezone, Event.Status status) {
+                            String timezone, Event.Status status, boolean hackathonEnabled, int teamMaxSize,
+                            Instant votingOpensAt, Instant votingClosesAt, boolean votingResultsPublic,
+                            boolean chatEnabled) {
 
-        static EventView of(Event e) {
+        public static EventView of(Event e) {
             return new EventView(e.getId(), e.getSlug(), e.getName(), e.getTagline(), e.getDescription(),
-                    e.getVenueName(), e.getVenueAddress(), e.getStartsAt(), e.getEndsAt(), e.getTimezone(), e.getStatus());
+                    e.getVenueName(), e.getVenueAddress(), e.getStartsAt(), e.getEndsAt(), e.getTimezone(), e.getStatus(),
+                    e.isHackathonEnabled(), e.getTeamMaxSize(), e.getVotingOpensAt(), e.getVotingClosesAt(),
+                    e.isVotingResultsPublic(), e.isChatEnabled());
         }
     }
 
@@ -34,6 +40,12 @@ public final class EventDtos {
             Instant startsAt,
             Instant endsAt,
             @Size(max = 60) String timezone,
-            @NotNull Event.Status status) {
+            @NotNull Event.Status status,
+            boolean hackathonEnabled,
+            @Min(0) @Max(50) Integer teamMaxSize,
+            Instant votingOpensAt,
+            Instant votingClosesAt,
+            boolean votingResultsPublic,
+            boolean chatEnabled) {
     }
 }

@@ -16,6 +16,9 @@ A mobile-friendly web app for the IT Limerick Summit. Attendees see the agenda, 
 | Live updates feed, refreshed every 30 seconds | Add other organisers, speakers and sponsors to an event |
 | Works on poor Wi-Fi: last copy of the agenda is kept on the phone | Hidden speaker profiles until approved |
 | Account page: change details, download data, delete account | |
+| **Hackathon (when switched on):** browse teams and projects, start a team and share its code, join with a code, or ask to be placed | **Team sorter:** places everyone waiting into teams of even size; move people by hand |
+| **Vote** for the project of the day: one vote each, changeable until voting closes, not for your own team | Set voting times, shortlist teams for the ballot, see live counts, choose when results go public |
+| **Chat** with everyone at the event, and react to announcements | Turn chat on or off per event; remove any message |
 
 ## Run it locally
 
@@ -47,12 +50,12 @@ Open http://localhost:8080, create an account with the email you put in `APP_ADM
 ## Tests
 
 ```bash
-cd backend && mvn verify        # 13 API tests against the summit_test PostgreSQL database
+cd backend && mvn verify        # 19 API tests against the summit_test PostgreSQL database
 cd frontend && npm test         # timezone helper tests
 cd frontend && npm run build    # type-check and production build
 ```
 
-The backend tests cover: public pages hide drafts and unpublished speakers, ETag caching, CSRF protection, registration/login/logout, login lockout after repeated failures, organiser-only admin access, organisers can't edit other events' data, input validation, bookmarks, GDPR export and account deletion, and one-time password reset links.
+The backend tests cover: public pages hide drafts and unpublished speakers, ETag caching, CSRF protection, registration/login/logout, login lockout after repeated failures, organiser-only admin access, organisers can't edit other events' data, input validation, bookmarks, GDPR export and account deletion, one-time password reset links, team creation and joining (with size limits and lead hand-over), the team sorter, voting rules and results, chat moderation and reactions, and clean-up of hackathon data when an account is deleted.
 
 GitHub Actions runs all of this on every push (`.github/workflows/ci.yml`).
 
@@ -67,7 +70,9 @@ backend/
     common/         errors, tokens, shared validation
     config/         settings (AppProperties), ETag filter
     email/          password-reset email sender (webhook)
+    chat/           attendee chat and reactions on updates
     event/          events
+    hackathon/      participants, teams, team sorter, voting
     maintenance/    nightly clean-up, optional demo data
     schedule/       "My schedule" bookmarks
     security/       login sessions, CSRF, permissions

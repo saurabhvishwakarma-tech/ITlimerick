@@ -15,7 +15,7 @@ public class WebConfig {
     @Bean
     FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {
         FilterRegistrationBean<ShallowEtagHeaderFilter> bean = new FilterRegistrationBean<>(new ShallowEtagHeaderFilter());
-        bean.addUrlPatterns("/api/v1/events/*", "/api/v1/sessions/*", "/api/v1/speakers/*");
+        bean.addUrlPatterns("/api/v1/events/*", "/api/v1/sessions/*", "/api/v1/speakers/*", "/api/v1/teams/*");
         bean.setName("etagFilter");
         return bean;
     }

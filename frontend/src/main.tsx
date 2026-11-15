@@ -12,6 +12,7 @@ import { AccountPage } from './pages/AccountPage';
 import { AdminEvent, AdminHome } from './pages/admin/AdminPages';
 import { AgendaPage } from './pages/AgendaPage';
 import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/AuthPages';
+import { MorePage, TeamPage, TeamsPage, VotePage } from './pages/HackathonPages';
 import { HomeRedirect, NotFoundPage, PrivacyPage } from './pages/MiscPages';
 import { MySchedulePage, PartnersPage, SessionPage, SpeakerPage, SpeakersPage, UpdatesPage } from './pages/PublicPages';
 
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
       { path: 'partners', element: <PartnersPage /> },
       { path: 'updates', element: <UpdatesPage /> },
       { path: 'my-schedule', element: <MySchedulePage /> },
+      { path: 'teams', element: <TeamsPage /> },
+      { path: 'teams/:teamId', element: <TeamPage /> },
+      { path: 'vote', element: <VotePage /> },
+      { path: 'more', element: <MorePage /> },
     ],
   },
   {

@@ -58,7 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/error").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/events", "/api/v1/events/**",
-                                "/api/v1/sessions/**", "/api/v1/speakers/**").permitAll()
+                                "/api/v1/sessions/**", "/api/v1/speakers/**", "/api/v1/teams/**").permitAll()
                         .requestMatchers("/api/v1/me", "/api/v1/me/**", "/api/v1/admin/**").authenticated()
                         .anyRequest().denyAll());
         return http.build();
