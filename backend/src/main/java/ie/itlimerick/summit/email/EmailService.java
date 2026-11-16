@@ -38,6 +38,9 @@ public class EmailService {
     }
 
     public void send(String to, String subject, String text) {
+        if (props.email() != null && props.email().logContent()) {
+            log.warn("TEST MODE email to {}\nSubject: {}\n{}", to, subject, text);
+        }
         if (!isConfigured()) {
             log.warn("Email not sent (EMAIL_WEBHOOK_URL not configured): subject='{}'", subject);
             return;

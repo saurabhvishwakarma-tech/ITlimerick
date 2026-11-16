@@ -29,10 +29,17 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-summit}
       APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
       APP_ADMIN_EMAILS: ${APP_ADMIN_EMAILS:-}
-      # Local runs use plain http, so the login cookie can't be "Secure". Never set this in production.
-      COOKIE_SECURE: "false"
+      # false for plain http://localhost. Set COOKIE_SECURE=true in .env when everyone uses an https link.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       APP_SEED_DEMO_DATA: ${APP_SEED_DEMO_DATA:-false}
       APP_SEED_DEMO_DATE: ${APP_SEED_DEMO_DATE:-2027-02-18}
+      # Optional: Google / LinkedIn login (docs/SOCIAL-LOGIN.md). Leave empty to hide the buttons.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
+      # Testing only: print password-reset emails in the logs so you can pass the link on.
+      EMAIL_LOG_CONTENT: ${EMAIL_LOG_CONTENT:-false}
 
   web:
     build: ./frontend

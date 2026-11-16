@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api, ApiError } from '../api/http';
 import { useAuth } from '../auth/AuthContext';
 import { lastEventSlug } from '../components/Shell';
+import { OAuthErrorNotice, SocialButtons } from '../components/SocialLogin';
 import { Field, Notice } from '../components/ui';
 
 function useAfterLogin() {
@@ -50,6 +51,8 @@ export function LoginPage() {
         <p className="lede">Keep your saved sessions on every device.</p>
       </div>
       <form className="panel form" onSubmit={submit} noValidate>
+        <OAuthErrorNotice />
+        <SocialButtons />
         {error && <Notice kind="error">{error.message}</Notice>}
         <Field label="Email" error={error?.fields.email}>
           {(p) => <input {...p} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />}
@@ -100,6 +103,7 @@ export function RegisterPage() {
         <p className="lede">You only need an account to sync your schedule. Everything else works without one.</p>
       </div>
       <form className="panel form" onSubmit={submit} noValidate>
+        <SocialButtons />
         {error && <Notice kind="error">{error.message}</Notice>}
         <Field label="Your name" error={error?.fields.displayName} hint="Shown only to the organisers.">
           {(p) => <input {...p} type="text" autoComplete="name" required maxLength={80} value={form.displayName} onChange={(e) => set('displayName', e.target.value)} />}

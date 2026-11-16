@@ -17,6 +17,7 @@ import { Empty, ErrorState, Loading, Notice } from '../../components/ui';
 import { formatDateTime } from '../../lib/time';
 import { CrudTab, EditDialog, EntityForm, type FieldDef, type FormValues } from './CrudTab';
 import { HackathonTab } from './HackathonAdmin';
+import { CheckinTab, FeedbackTab } from './CheckinAdmin';
 
 const DEFAULT_TZ = 'Europe/Dublin';
 
@@ -159,6 +160,8 @@ const TABS = [
   ['partners', 'Partners'],
   ['updates', 'Updates'],
   ['hackathon', 'Hackathon'],
+  ['checkin', 'Check-in'],
+  ['feedback', 'Feedback'],
   ['rooms', 'Rooms'],
   ['team', 'Team'],
   ['details', 'Event details'],
@@ -212,6 +215,8 @@ function AdminEventInner() {
       {tab === 'partners' && <PartnersTab base={base} event={e} />}
       {tab === 'updates' && <UpdatesTab base={base} event={e} />}
       {tab === 'hackathon' && <HackathonTab base={base} event={e} />}
+      {tab === 'checkin' && <CheckinTab base={base} event={e} />}
+      {tab === 'feedback' && <FeedbackTab base={base} event={e} />}
       {tab === 'rooms' && <RoomsTab base={base} event={e} />}
       {tab === 'team' && <TeamTab base={base} />}
       {tab === 'details' && <DetailsTab event={e} />}

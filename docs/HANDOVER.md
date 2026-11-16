@@ -33,6 +33,9 @@ Traffic flow: browser → your load balancer (HTTPS) → website container → A
 | `RETENTION_DELETE_INACTIVE_USERS_DAYS` | no | `120` | GDPR: deletes accounts unused for this many days. `0` = off. Agree the number with the organisers. |
 | `APP_PRIVACY_NOTICE_VERSION` | no | `2026-11` | Recorded with each user's consent. Change it when the privacy notice changes. |
 | `APP_SEED_DEMO_DATA` | no | `false` | **Must stay false in production.** |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | no | (secret) | Shows "Continue with Google". Register `<APP_PUBLIC_BASE_URL>/api/v1/auth/oauth/google/callback`. See `docs/SOCIAL-LOGIN.md`. |
+| `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | no | (secret) | Shows "Continue with LinkedIn". Callback ends in `/linkedin/callback`. |
+| `EMAIL_LOG_CONTENT` | no | `false` | **Must stay false in production.** Testing only: prints full emails (including reset links) to the log. |
 | `JAVA_OPTS` | no | `-XX:MaxRAMPercentage=75` | JVM options |
 
 ### Website
@@ -90,9 +93,10 @@ On AWS, a small Lambda behind a function URL or API Gateway that calls SES works
 
 ## 7. Known limitations (current version)
 
-- **Google and LinkedIn login are not included yet.** They were left out of this first version because the build environment couldn't download the OAuth libraries. They can be added with Spring Security's OAuth2 client, and the session design already supports it.
+- **Google and LinkedIn login** use the standard OpenID Connect code flow, written with the JDK HTTP client (no extra libraries). The API must be able to make outbound HTTPS calls to `oauth2.googleapis.com`, `openidconnect.googleapis.com`, `www.linkedin.com` and `api.linkedin.com`. Allow these in any egress firewall.
+- **Check-in scanning uses the phone camera**, which browsers only allow over HTTPS. The nginx headers allow the camera for this site only (`Permissions-Policy: camera=(self)`).
 - **Images are links, not uploads.** Organisers paste `https://` links for speaker photos and partner logos. Uploads (e.g. to S3) can be added later.
-- **The Docker images and nginx config were not test-run** in the development environment, because it couldn't download base images. The application itself was fully tested. Please run `docker compose up --build` once as a smoke test.
+- **The Docker images were smoke-tested with `docker compose up --build`** on a developer laptop, not under production load. Please run your own load test before the event (section 4).
 - **Login lockout is per API instance** (in memory). With several instances, a WAF rate limit on `/api/v1/auth/login` is the stronger protection.
 
 ## 8. API overview
@@ -104,6 +108,9 @@ All endpoints are under `/api/v1`.
 | Auth | `GET /auth/csrf`, `GET /auth/session`, `POST /auth/register`, `/auth/login`, `/auth/logout`, `/auth/password/forgot`, `/auth/password/reset` | Anyone |
 | Public | `GET /events`, `/events/{slug}`, `/events/{slug}/sessions`, `/rooms`, `/speakers`, `/sponsors`, `/announcements`, `GET /sessions/{id}`, `GET /speakers/{id}` | Anyone (published events only) |
 | Me | `GET/PATCH/DELETE /me`, `PUT /me/password`, `PUT /me/consents`, `GET /me/export`, `GET /me/schedule?event=`, `PUT/DELETE /me/schedule/{sessionId}` | Logged in |
+| Social login | `GET /auth/providers`, `GET /auth/oauth/{google|linkedin}/start[?returnTo=&connect=true]`, `GET /auth/oauth/{provider}/callback`, `DELETE /me/connected-accounts/{provider}` | Anyone (browser redirects) |
+| Check-in | `GET /me/ticket?event=`; admin: `GET/POST /admin/events/{id}/checkins`, `POST …/checkins/by-email`, `DELETE …/checkins/{userId}` | Logged in / organisers |
+| Feedback | `GET /me/feedback?event=`, `PUT/DELETE /me/sessions/{id}/feedback`; admin: `GET /admin/events/{id}/feedback` | Logged in / organisers |
 | Hackathon (public) | `GET /events/{slug}/teams`, `GET /teams/{id}`, `GET /events/{slug}/voting` | Anyone (member names only when logged in) |
 | Hackathon (me) | `GET/PUT/DELETE /me/hackathon?event=`, `POST/PUT /me/team?event=`, `POST /me/team/join`, `POST /me/team/leave?event=`, `PUT/DELETE /me/vote?event=` | Logged in |
 | Chat | `GET /events/{slug}/chat[?after=]`, `POST /me/chat?event=`, `DELETE /me/chat/{id}`, `PUT/DELETE /me/announcements/{id}/reactions/{HEART|THUMBS_UP|PARTY|CLAP}` | Logged in; event must have chat switched on |

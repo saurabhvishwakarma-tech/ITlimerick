@@ -195,6 +195,47 @@ export interface ProfileView {
   marketingConsent: boolean;
   createdAt: string;
   memberships: { id: string; eventId: string; eventSlug: string | null; eventName: string | null; role: MemberRole }[];
+  hasPassword: boolean;
+  connectedAccounts: Provider[];
+}
+
+export type Provider = 'google' | 'linkedin';
+
+export interface TicketView {
+  eventName: string;
+  code: string;
+  qrText: string;
+  checkedInAt: string | null;
+}
+
+export interface CheckinResult {
+  userId: string;
+  name: string;
+  email: string;
+  checkedInAt: string;
+  alreadyCheckedIn: boolean;
+}
+
+export interface CheckinSummary {
+  tickets: number;
+  checkedIn: number;
+  attendees: { userId: string; name: string; email: string; code: string; checkedInAt: string | null }[];
+}
+
+export interface MyFeedbackView {
+  sessionId: string;
+  rating: number;
+  comment: string | null;
+}
+
+export interface SessionFeedbackView {
+  sessionId: string;
+  title: string;
+  startsAt: string;
+  responses: number;
+  averageRating: number | null;
+  ratingCounts: number[];
+  comments: { rating: number; comment: string; at: string }[];
 }
 
 export interface MemberView {

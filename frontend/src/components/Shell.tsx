@@ -93,17 +93,18 @@ function EventNav({ slug, variant, hasNewUpdates }: { slug: string; variant: 'to
     updates: { to: `/e/${slug}/updates`, label: 'Updates', icon: icons.updates, dot: hasNewUpdates },
     schedule: { to: `/e/${slug}/my-schedule`, label: 'My schedule', icon: <BookmarkIcon filled={false} /> },
     more: { to: `/e/${slug}/more`, label: 'More', icon: extraIcons.more },
+    ticket: { to: `/e/${slug}/ticket`, label: 'Ticket', icon: extraIcons.more },
   };
   type Item = { to: string; label: string; icon: ReactNode; end?: boolean; dot?: boolean };
   // Phones have room for five tabs; with the hackathon on, the less-used pages move under "More".
   const items: Item[] =
     variant === 'top'
       ? hackathon
-        ? [all.agenda, all.speakers, all.partners, all.teams, all.vote, all.updates, all.schedule]
-        : [all.agenda, all.speakers, all.partners, all.updates, all.schedule]
+        ? [all.agenda, all.speakers, all.partners, all.teams, all.vote, all.updates, all.schedule, all.ticket]
+        : [all.agenda, all.speakers, all.partners, all.updates, all.schedule, all.ticket]
       : hackathon
         ? [all.agenda, all.teams, all.vote, all.updates, all.more]
-        : [all.agenda, all.speakers, all.partners, all.updates, all.schedule];
+        : [all.agenda, all.speakers, all.updates, all.schedule, all.more];
   return (
     <nav className={variant === 'top' ? 'topnav' : 'tabbar'} aria-label={variant === 'top' ? 'Event' : 'Event sections'}>
       {items.map((item) => (

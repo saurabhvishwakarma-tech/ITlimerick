@@ -15,6 +15,7 @@ import ie.itlimerick.summit.account.AppUser;
 import ie.itlimerick.summit.account.AppUserRepository;
 import ie.itlimerick.summit.config.AppProperties;
 import ie.itlimerick.summit.security.AuthSessionRepository;
+import ie.itlimerick.summit.security.OAuthService;
 import ie.itlimerick.summit.security.PasswordResetTokenRepository;
 
 /**
@@ -30,9 +31,11 @@ public class HousekeepingJobs {
     private final AppUserRepository users;
     private final AccountService accounts;
     private final AppProperties props;
+    private final OAuthService oauth;
 
     public HousekeepingJobs(AuthSessionRepository authSessions, PasswordResetTokenRepository resetTokens,
-                            AppUserRepository users, AccountService accounts, AppProperties props) {
+                            AppUserRepository users, AccountService accounts, AppProperties props, OAuthService oauth) {
+        this.oauth = oauth;
         this.authSessions = authSessions;
         this.resetTokens = resetTokens;
         this.users = users;
@@ -46,6 +49,7 @@ public class HousekeepingJobs {
         Instant now = Instant.now();
         int sessions = authSessions.deleteExpired(now);
         int resets = resetTokens.deleteExpired(now);
+        oauth.deleteExpiredStates();
         log.info("Housekeeping: removed {} expired login sessions and {} expired reset links", sessions, resets);
     }
 

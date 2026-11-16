@@ -131,7 +131,9 @@ public class AuthService {
     @Transactional
     public void changePassword(UUID userId, String currentPassword, String newPassword, HttpServletResponse response) {
         AppUser user = users.findById(userId).orElseThrow(() -> ApiException.notFound("User"));
-        if (user.getPasswordHash() == null || !encoder.matches(currentPassword, user.getPasswordHash())) {
+        // People who signed up with Google/LinkedIn have no password yet; they can set one without a current one.
+        if (user.getPasswordHash() != null
+                && (currentPassword == null || !encoder.matches(currentPassword, user.getPasswordHash()))) {
             throw ApiException.badRequest("Your current password is incorrect");
         }
         user.setPasswordHash(encoder.encode(newPassword));

@@ -28,6 +28,7 @@ import ie.itlimerick.summit.account.AccountService.MemberView;
 import ie.itlimerick.summit.account.AccountService.ProfileView;
 import ie.itlimerick.summit.security.AuthService;
 import ie.itlimerick.summit.security.AuthSessionService;
+import ie.itlimerick.summit.security.OAuthService;
 import ie.itlimerick.summit.security.CurrentUser;
 
 @RestController
@@ -40,7 +41,7 @@ public class MeController {
     }
 
     public record ChangePasswordRequest(
-            @NotBlank @Size(max = 128) String currentPassword,
+            @Size(max = 128) String currentPassword,
             @NotBlank @Size(min = 10, max = 128, message = "Use at least 10 characters") String newPassword) {
     }
 
@@ -51,7 +52,10 @@ public class MeController {
     private final AuthService auth;
     private final AuthSessionService sessions;
 
-    public MeController(AccountService accounts, AuthService auth, AuthSessionService sessions) {
+    private final OAuthService oauth;
+
+    public MeController(AccountService accounts, AuthService auth, AuthSessionService sessions, OAuthService oauth) {
+        this.oauth = oauth;
         this.accounts = accounts;
         this.auth = auth;
         this.sessions = sessions;
@@ -76,6 +80,13 @@ public class MeController {
     ResponseEntity<Void> changePassword(@AuthenticationPrincipal CurrentUser user,
                                         @Valid @RequestBody ChangePasswordRequest req, HttpServletResponse response) {
         auth.changePassword(user.id(), req.currentPassword(), req.newPassword(), response);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Disconnect Google or LinkedIn from this account. */
+    @DeleteMapping("/api/v1/me/connected-accounts/{provider}")
+    ResponseEntity<Void> disconnect(@AuthenticationPrincipal CurrentUser user, @PathVariable String provider) {
+        oauth.unlink(user.id(), provider);
         return ResponseEntity.noContent().build();
     }
 

@@ -1362,3 +1362,256 @@ dialog::backdrop {
   gap: 0.5rem;
   align-items: baseline;
 }
+
+/* ---------- Social sign-in ---------- */
+.small {
+  font-size: var(--step--1);
+}
+.social-btn {
+  width: 100%;
+  justify-content: center;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+}
+.social-btn:hover {
+  background: var(--limestone);
+  color: var(--ink);
+}
+.divider-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+.divider-text::before,
+.divider-text::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+.login-methods {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.login-methods li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--line);
+}
+.login-methods li:first-child {
+  border-top: 0;
+}
+
+/* ---------- Ticket ---------- */
+.ticket {
+  margin: 0 auto;
+  width: min(100%, 22rem);
+  background: var(--paper);
+  border: 2px solid var(--shannon);
+  border-radius: var(--radius-m);
+  padding: 1.25rem 1.25rem 1rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  /* Perforation between the code and the details, like a paper ticket stub. */
+  background-image: radial-gradient(circle at 0 calc(100% - 5.25rem), var(--limestone) 0.6rem, transparent 0.65rem),
+    radial-gradient(circle at 100% calc(100% - 5.25rem), var(--limestone) 0.6rem, transparent 0.65rem);
+}
+.ticket img,
+.ticket-placeholder {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+}
+.ticket figcaption {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  border-top: 2px dashed var(--line);
+  padding-top: 0.75rem;
+  width: 100%;
+}
+.ticket-code {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  letter-spacing: 0.08em;
+}
+.ticket.is-used img {
+  opacity: 0.35;
+}
+
+/* ---------- Session feedback ---------- */
+.stars {
+  color: var(--amber);
+  letter-spacing: 0.05em;
+}
+.stars-off {
+  color: var(--line);
+}
+.star-input {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.star-input label {
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--line);
+  padding: 0.1rem;
+}
+.star-input label.is-on {
+  color: var(--amber);
+}
+.star-input input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.star-input label:has(input:focus-visible) {
+  outline: 3px solid var(--shannon);
+  border-radius: var(--radius-s);
+}
+.star-input .muted {
+  margin-left: 0.5rem;
+}
+
+/* ---------- Admin: check-in and feedback ---------- */
+.checkin-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  align-items: start;
+}
+.scanner {
+  display: grid;
+  gap: 0.75rem;
+}
+.scanner video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--ink);
+  border-radius: var(--radius-m);
+}
+.scanner video.is-hidden {
+  display: none;
+}
+.scanner-off {
+  background: var(--paper);
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-m);
+  padding: 2rem 1rem;
+  text-align: center;
+  justify-items: center;
+}
+.scan-result {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-m);
+  border-left: 8px solid;
+  font-size: var(--step-1);
+}
+.scan-result.is-ok {
+  background: #e3f2e8;
+  border-color: var(--ok);
+}
+.scan-result.is-again {
+  background: var(--amber-wash);
+  border-color: var(--amber);
+}
+.scan-result.is-error {
+  background: var(--danger-wash);
+  border-color: var(--danger);
+}
+.checkin-count strong {
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  color: var(--shannon);
+  margin-right: 0.35rem;
+}
+.mono-code {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+.feedback-list {
+  list-style: none;
+  padding: 0;
+}
+.feedback-score {
+  display: grid;
+  justify-items: end;
+  gap: 0.1rem;
+  margin: 0;
+}
+.feedback-score strong {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+}
+.bars {
+  display: grid;
+  gap: 0.25rem;
+  max-width: 24rem;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--step--1);
+}
+.bar {
+  height: 0.5rem;
+  background: var(--limestone);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--shannon);
+}
+.comment-list {
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Errors shown outside a .field (e.g. the privacy checkbox, the camera message). */
+.form > .error,
+p.error {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* Inputs used outside a labelled .field (check-in code, email, search). */
+.checkin-grid .row input,
+.stack > .row > input[aria-label] {
+  flex: 1;
+  min-width: 10rem;
+  font: inherit;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+}
+.checkin-grid .row input:focus-visible,
+.stack > .row > input[aria-label]:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 1px;
+}

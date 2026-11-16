@@ -56,9 +56,31 @@ app:
     # Optional. If set, emails are POSTed as JSON {to, subject, text} to this URL.
     webhook-url: ${EMAIL_WEBHOOK_URL:}
     webhook-token: ${EMAIL_WEBHOOK_TOKEN:}
+    # Testing only: write whole emails (including password reset links) to the log. Never in production.
+    log-content: ${EMAIL_LOG_CONTENT:false}
   retention:
     # Delete non-admin accounts that have not logged in for this many days. 0 = off.
     delete-inactive-users-after-days: ${RETENTION_DELETE_INACTIVE_USERS_DAYS:0}
+
+  # "Continue with Google / LinkedIn". Each button appears only when its client id and secret are set.
+  # Setup steps: docs/SOCIAL-LOGIN.md
+  oauth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+      authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+      token-uri: https://oauth2.googleapis.com/token
+      user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+      scope: openid email profile
+      pkce: true
+    linkedin:
+      client-id: ${LINKEDIN_CLIENT_ID:}
+      client-secret: ${LINKEDIN_CLIENT_SECRET:}
+      authorization-uri: https://www.linkedin.com/oauth/v2/authorization
+      token-uri: https://www.linkedin.com/oauth/v2/accessToken
+      user-info-uri: https://api.linkedin.com/v2/userinfo
+      scope: openid email profile
+      pkce: false
 
 logging:
   level:

@@ -10,6 +10,7 @@ import { Avatar, BookmarkButton, Empty, ErrorState, Loading, Notice, safeUrl } f
 import { formatDateTime, formatDay, formatTime, relativeTime } from '../lib/time';
 import { useNow } from '../lib/useNow';
 import { useSchedule } from '../lib/useSchedule';
+import { SessionFeedback } from './AttendeeExtras';
 
 function useTz(slug: string) {
   return useEvent(slug).data?.timezone ?? 'Europe/Dublin';
@@ -63,6 +64,7 @@ export function SessionPage() {
           </ul>
         </section>
       )}
+      <SessionFeedback slug={slug} session={s} />
     </div>
   );
 }

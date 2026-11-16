@@ -626,6 +626,7 @@ export function MorePage() {
     { to: `/e/${slug}/speakers`, label: 'Speakers' },
     { to: `/e/${slug}/partners`, label: 'Partners' },
     { to: `/e/${slug}/my-schedule`, label: 'My schedule' },
+    { to: `/e/${slug}/ticket`, label: 'My ticket (QR for check-in)' },
     { to: user ? '/account' : '/login', label: user ? 'Your account' : 'Log in' },
     { to: '/privacy', label: 'Privacy notice' },
   ];

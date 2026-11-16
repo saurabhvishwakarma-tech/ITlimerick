@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,8 @@ public class AccountService {
     }
 
     public record ProfileView(UUID id, String email, String displayName, boolean platformAdmin, boolean marketingConsent,
-                              Instant createdAt, List<MembershipView> memberships) {
+                              Instant createdAt, List<MembershipView> memberships, boolean hasPassword,
+                              List<String> connectedAccounts) {
     }
 
     public record ExportView(Instant exportedAt, Map<String, Object> account, List<MembershipView> memberships,
@@ -43,7 +45,8 @@ public class AccountService {
                              List<Map<String, Object>> linkedSpeakerProfiles, long activeLoginSessions,
                              List<Map<String, Object>> hackathon, List<Map<String, Object>> teams,
                              List<Map<String, Object>> votes, List<Map<String, Object>> chatMessages,
-                             List<Map<String, Object>> reactions) {
+                             List<Map<String, Object>> reactions, List<String> connectedAccounts,
+                             List<Map<String, Object>> tickets, List<Map<String, Object>> sessionFeedback) {
     }
 
     public record MemberView(UUID id, UUID userId, String email, String displayName, EventMembership.Role role,
@@ -64,13 +67,16 @@ public class AccountService {
     private final VoteRepository votes;
     private final ChatMessageRepository chat;
     private final AnnouncementReactionRepository reactions;
+    private final JdbcClient jdbc;
 
     public AccountService(AppUserRepository users, EventMembershipRepository memberships,
                           ConsentRecordRepository consents, BookmarkRepository bookmarks,
                           AgendaSessionRepository sessions, SpeakerRepository speakers, EventRepository events,
                           AuthSessionRepository authSessions, AppProperties props,
                           HackathonParticipantRepository participants, TeamMemberRepository teamMembers,
-                          VoteRepository votes, ChatMessageRepository chat, AnnouncementReactionRepository reactions) {
+                          VoteRepository votes, ChatMessageRepository chat, AnnouncementReactionRepository reactions,
+                          JdbcClient jdbc) {
+        this.jdbc = jdbc;
         this.participants = participants;
         this.teamMembers = teamMembers;
         this.votes = votes;
@@ -93,7 +99,8 @@ public class AccountService {
         boolean marketing = consents.findFirstByUserIdAndTypeOrderByRecordedAtDesc(userId, ConsentRecord.Type.MARKETING)
                 .map(ConsentRecord::isGranted).orElse(false);
         return new ProfileView(user.getId(), user.getEmail(), user.getDisplayName(), user.isPlatformAdmin(), marketing,
-                user.getCreatedAt(), membershipViews(memberships.findByUserId(userId)));
+                user.getCreatedAt(), membershipViews(memberships.findByUserId(userId)), user.getPasswordHash() != null,
+                connectedAccounts(userId));
     }
 
     @Transactional
@@ -153,7 +160,20 @@ public class AccountService {
                 .toList();
         return new ExportView(Instant.now(), account, membershipViews(memberships.findByUserId(userId)),
                 savedSessions, consentList, speakerProfiles, authSessions.countByUserId(userId),
-                hackathon, teamList, voteList, chatList, reactionList);
+                hackathon, teamList, voteList, chatList, reactionList, connectedAccounts(userId),
+                jdbc.sql("""
+                        SELECT e.name AS event, t.code AS ticket_code, t.checked_in_at
+                        FROM event_ticket t JOIN event e ON e.id = t.event_id WHERE t.user_id = ?""")
+                        .param(userId).query().listOfRows(),
+                jdbc.sql("""
+                        SELECT s.title AS session, f.rating, f.comment, f.updated_at
+                        FROM session_feedback f JOIN agenda_session s ON s.id = f.session_id WHERE f.user_id = ?""")
+                        .param(userId).query().listOfRows());
+    }
+
+    private List<String> connectedAccounts(UUID userId) {
+        return jdbc.sql("SELECT provider FROM user_identity WHERE user_id = ? ORDER BY provider")
+                .param(userId).query(String.class).list();
     }
 
     /**

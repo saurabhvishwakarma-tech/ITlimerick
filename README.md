@@ -19,6 +19,11 @@ A mobile-friendly web app for the IT Limerick Summit. Attendees see the agenda, 
 | **Hackathon (when switched on):** browse teams and projects, start a team and share its code, join with a code, or ask to be placed | **Team sorter:** places everyone waiting into teams of even size; move people by hand |
 | **Vote** for the project of the day: one vote each, changeable until voting closes, not for your own team | Set voting times, shortlist teams for the ballot, see live counts, choose when results go public |
 | **Chat** with everyone at the event, and react to announcements | Turn chat on or off per event; remove any message |
+| **Log in with Google or LinkedIn** (when switched on), or email and password | Switch each provider on with a client ID and secret ([docs/SOCIAL-LOGIN.md](docs/SOCIAL-LOGIN.md)) |
+| **My ticket:** a QR code to show at the door | **Check-in:** scan QR codes with a phone camera, type a code, or check in by email; live count |
+| **Rate sessions** (1–5 stars and a comment) once they've started | **Feedback:** average, breakdown and comments per session, without names |
+
+**Testing with friends on their phones:** [docs/TESTING-WITH-FRIENDS.md](docs/TESTING-WITH-FRIENDS.md).
 
 ## Run it locally
 
@@ -50,12 +55,12 @@ Open http://localhost:8080, create an account with the email you put in `APP_ADM
 ## Tests
 
 ```bash
-cd backend && mvn verify        # 19 API tests against the summit_test PostgreSQL database
+cd backend && mvn verify        # 26 API tests against the summit_test PostgreSQL database
 cd frontend && npm test         # timezone helper tests
 cd frontend && npm run build    # type-check and production build
 ```
 
-The backend tests cover: public pages hide drafts and unpublished speakers, ETag caching, CSRF protection, registration/login/logout, login lockout after repeated failures, organiser-only admin access, organisers can't edit other events' data, input validation, bookmarks, GDPR export and account deletion, one-time password reset links, team creation and joining (with size limits and lead hand-over), the team sorter, voting rules and results, chat moderation and reactions, and clean-up of hackathon data when an account is deleted.
+The backend tests cover: public pages hide drafts and unpublished speakers, ETag caching, CSRF protection, registration/login/logout, login lockout after repeated failures, organiser-only admin access, organisers can't edit other events' data, input validation, bookmarks, GDPR export and account deletion, one-time password reset links, team creation and joining (with size limits and lead hand-over), the team sorter, voting rules and results, chat moderation and reactions, Google sign-in against a fake Google (new account, same-email account, replayed or forged state, cancelled sign-in, no redirects to other sites), QR check-in (scan, typed code, by email, undo), session feedback rules and the anonymous summary, and clean-up of hackathon data when an account is deleted.
 
 GitHub Actions runs all of this on every push (`.github/workflows/ci.yml`).
 
@@ -71,11 +76,13 @@ backend/
     config/         settings (AppProperties), ETag filter
     email/          password-reset email sender (webhook)
     chat/           attendee chat and reactions on updates
+    checkin/        tickets and QR check-in
+    feedback/       session ratings
     event/          events
     hackathon/      participants, teams, team sorter, voting
     maintenance/    nightly clean-up, optional demo data
     schedule/       "My schedule" bookmarks
-    security/       login sessions, CSRF, permissions
+    security/       login sessions, Google/LinkedIn login, CSRF, permissions
     speaker/        speakers
     sponsor/        partners
   src/main/resources/db/migration/   database schema (Flyway)

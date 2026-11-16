@@ -11,6 +11,7 @@ import { persistPublicQueries, restorePublicQueries } from './lib/offline';
 import { AccountPage } from './pages/AccountPage';
 import { AdminEvent, AdminHome } from './pages/admin/AdminPages';
 import { AgendaPage } from './pages/AgendaPage';
+import { TicketPage } from './pages/AttendeeExtras';
 import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/AuthPages';
 import { MorePage, TeamPage, TeamsPage, VotePage } from './pages/HackathonPages';
 import { HomeRedirect, NotFoundPage, PrivacyPage } from './pages/MiscPages';
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
       { path: 'teams/:teamId', element: <TeamPage /> },
       { path: 'vote', element: <VotePage /> },
       { path: 'more', element: <MorePage /> },
+      { path: 'ticket', element: <TicketPage /> },
     ],
   },
   {
